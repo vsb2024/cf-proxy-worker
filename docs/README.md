@@ -1,84 +1,84 @@
-# Cloudflare Worker - Proxy для Casino
+# Cloudflare Worker - Casino Proxy
 
-Этот Worker проксирует контент с `https://casinoguards.com/casino-en-ligne/*` на ваш домен с автоматической перезаписью всех ссылок и блокировкой индексации.
+This Worker proxies content from `https://casinoguards.com/casino-en-ligne/*` to your domain with automatic rewriting of all links and search indexing blocking.
 
-## Развёртывание вручную через веб-интерфейс
+## Manual Deployment via Web Interface
 
-### Шаг 1: Войдите в Cloudflare Dashboard
-1. Перейдите на https://dash.cloudflare.com/
-2. Войдите в свой аккаунт
+### Step 1: Log in to Cloudflare Dashboard
+1. Go to https://dash.cloudflare.com/
+2. Log in to your account
 
-### Шаг 2: Создайте новый Worker
-1. В левом меню выберите **Workers & Pages**
-2. Нажмите кнопку **Start with Hello World!**
+### Step 2: Create a New Worker
+1. In the left menu, select **Workers & Pages**
+2. Click the **Start with Hello World!** button
 
 ![img.png](img.png)
 
-3. Дайте имя вашему Worker (например, `casino-proxy`)
+3. Give your Worker a name (e.g., `casino-proxy`)
 
 ![img_1.png](img_1.png)
 
-5. Нажмите **Deploy**
+5. Click **Deploy**
 
-### Шаг 3: Вставьте код
-1. После создания нажмите **Edit code** (или **Quick edit**)
+### Step 3: Insert Code
+1. After creation, click **Edit code** (or **Quick edit**)
 
 ![img_2.png](img_2.png)
 
-2. Удалите весь стандартный код в редакторе
-3. Скопируйте весь код из файла `worker.js` и вставьте в редактор
-4. Нажмите **Save and Deploy** (или **Deploy**)
+2. Delete all the default code in the editor
+3. Copy all code from the `worker.js` file and paste it into the editor
+4. Click **Save and Deploy** (or **Deploy**)
 
 ![img_3.png](img_3.png)
 
 
-### Шаг 4: Настройте Custom Domain
-1. Вернитесь на страницу Worker
+### Step 4: Configure Custom Domain
+1. Return to the Worker page
 ![img_5.png](img_5.png)
-2. Перейдите на вкладку **Settings** → **Domains & Routes**
+2. Go to the **Settings** → **Domains & Routes** tab
 ![img_6.png](img_6.png)
-3. В разделе **Domains & Routes** нажмите **Route**
+3. In the **Domains & Routes** section, click **Route**
 ![img_7.png](img_7.png)
-4. Введите route (например, `thenationonlineng.net/casino-en-ligne/*)
+4. Enter the route (e.g., `thenationonlineng.net/casino-en-ligne/*)
 ![img_8.png](img_8.png)
-5. Нажмите **Add Route**
+5. Click **Add Route**
 
-## Настройки Worker
+## Worker Settings
 
-В файле `worker.js` можно настроить следующие параметры:
+In the `worker.js` file, you can configure the following parameters:
 
 ```javascript
-const TARGET_ORIGIN = "https://casinoguards.com"; // Источник контента
-const BASE_PATH = "/casino-en-ligne"; // Префикс на вашем домене
-const BLOCK_SEARCH_INDEXING = false; // Блокировка индексации поисковиками
+const TARGET_ORIGIN = "https://casinoguards.com"; // Content source
+const BASE_PATH = "/casino-en-ligne"; // Prefix on your domain
+const BLOCK_SEARCH_INDEXING = false; // Block search engine indexing
 ```
 
-## Что делает Worker
+## What the Worker Does
 
-- ✅ Проксирует контент с `https://casinoguards.com/casino-en-ligne/*`
-- ✅ Переписывает все ссылки (href, src, action) на ваш домен
-- ✅ Обрабатывает srcset для адаптивных изображений
-- ✅ Переписывает URL в CSS файлах
-- ✅ Корректно обрабатывает cookies (меняет Domain)
-- ✅ Обрабатывает редиректы (30x)
-- ✅ Блокирует индексацию поисковиками:
-  - Добавляет мета-тег `<meta name="robots" content="noindex, nofollow">`
-  - Добавляет заголовок `X-Robots-Tag: noindex, nofollow`
-- ✅ Удаляет защитные заголовки (CSP, X-Frame-Options) для корректного встраивания
+- ✅ Proxies content from `https://casinoguards.com/casino-en-ligne/*`
+- ✅ Rewrites all links (href, src, action) to your domain
+- ✅ Processes srcset for responsive images
+- ✅ Rewrites URLs in CSS files
+- ✅ Correctly handles cookies (changes Domain)
+- ✅ Handles redirects (30x)
+- ✅ Blocks search engine indexing:
+  - Adds meta tag `<meta name="robots" content="noindex, nofollow">`
+  - Adds header `X-Robots-Tag: noindex, nofollow`
+- ✅ Removes security headers (CSP, X-Frame-Options) for proper embedding
 
-## Тестирование
+## Testing
 
-После развёртывания проверьте:
-- `https://thenationonlineng.net/casino-en-ligne` - должен показать контент с casinoguards.com
-- Все ссылки должны вести на ваш домен, а не на исходный
-- В исходном коде страницы не должно быть упоминаний `casinoguards.com`
+After deployment, verify:
+- `https://thenationonlineng.net/casino-en-ligne` - should display content from casinoguards.com
+- All links should point to your domain, not the original
+- The page source code should not contain any mentions of `casinoguards.com`
 
-## Обновление Worker
+## Updating the Worker
 
-При изменении кода в `worker.js`:
+When changing code in `worker.js`:
 
-**Через веб-интерфейс:**
-1. Откройте Worker в Dashboard
-2. Нажмите **Quick Edit**
-3. Вставьте обновлённый код
-4. Нажмите **Save and Deploy**
+**Via web interface:**
+1. Open the Worker in Dashboard
+2. Click **Quick Edit**
+3. Paste the updated code
+4. Click **Save and Deploy**
