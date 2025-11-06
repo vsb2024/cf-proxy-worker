@@ -3,6 +3,7 @@ export default {
     // Настройки
     const TARGET_ORIGIN = "https://casinoguards.com";
     const BASE_PATH = "/casino-en-ligne"; // на вашем домене
+    const BLOCK_SEARCH_INDEXING = false; // Блокировать индексацию поисковиками
     const url = new URL(request.url);
 
     // Обрабатываем только наш префикс; прочее можно отдавать как есть/404
@@ -10,8 +11,8 @@ export default {
       return new Response("Not Found", { status: 404 });
     }
 
-    // Строим целевой URL: /casino-en-ligne/foo -> https://casinoguards.com/foo
-    const upstreamPath = url.pathname.slice(BASE_PATH.length) || "/";
+    // Строим целевой URL: /casino-en-ligne/foo -> https://casinoguards.com/casino-en-ligne/foo
+    let upstreamPath = url.pathname; // используем полный путь как есть
     const upstreamUrl = new URL(upstreamPath + url.search, TARGET_ORIGIN);
 
     // Подготавливаем проксируемый запрос (метод/тело/заголовки)
@@ -67,8 +68,18 @@ export default {
         .on('source[srcset]', new SrcSetRewriter('srcset', TARGET_ORIGIN, BASE_PATH, url))
         .on('img[srcset]', new SrcSetRewriter('srcset', TARGET_ORIGIN, BASE_PATH, url));
 
+      // Добавляем meta robots для блокировки индексации
+      if (BLOCK_SEARCH_INDEXING) {
+        rewriter.on('head', new NoIndexInjector());
+      }
+
       // Убираем защитные заголовки источника, чтобы не ломать встраивание
       sanitizeHeadersForProxy(outHeaders);
+
+      // Добавляем X-Robots-Tag заголовок для блокировки индексации
+      if (BLOCK_SEARCH_INDEXING) {
+        outHeaders.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+      }
 
       return rewriter.transform(new Response(upstreamResp.body, {
         status: upstreamResp.status,
@@ -80,8 +91,9 @@ export default {
     if (contentType.includes("text/css")) {
       const css = await upstreamResp.text();
       const rewrittenCss = css
-        .replaceAll(/\burl\((['"]?)\/(?!\/)/g, `url($1${BASE_PATH}/`)
-        .replaceAll(new RegExp(escapeRegExp(TARGET_ORIGIN) + "/", "g"), `${BASE_PATH}/`);
+        // Заменяем только пути, которые еще не начинаются с basePath
+        .replaceAll(/\burl\((['"]?)\/(?!casino-en-ligne|\/)/g, `url($1${BASE_PATH}/`)
+        .replaceAll(new RegExp(escapeRegExp(TARGET_ORIGIN) + "(?!" + escapeRegExp(BASE_PATH) + ")", "g"), ``);
       sanitizeHeadersForProxy(outHeaders);
       outHeaders.set("Content-Length", String(new TextEncoder().encode(rewrittenCss).length));
       return new Response(rewrittenCss, { status: upstreamResp.status, headers: outHeaders });
@@ -100,19 +112,33 @@ function rewriteAbsoluteToProxy(href, targetOrigin, basePath, reqUrlObj) {
   try {
     const u = new URL(href, targetOrigin);
     const t = new URL(targetOrigin);
-    // Если ссылка ведёт на исходный домен — перепишем на префикс
+    // Если ссылка ведёт на исходный домен — оставляем как есть (путь уже содержит /casino-en-ligne/)
     if (u.origin === t.origin) {
+      // Проверяем, не начинается ли путь уже с basePath
+      if (u.pathname.startsWith(basePath)) {
+        return u.pathname + (u.search || "") + (u.hash || "");
+      }
       return basePath + (u.pathname.startsWith("/") ? u.pathname : `/${u.pathname}`) + (u.search || "") + (u.hash || "");
     }
     // Если ссылка корневая (когда href начинался с "/")
     if (href.startsWith("/")) {
+      // Проверяем, не начинается ли путь уже с basePath
+      if (href.startsWith(basePath)) {
+        return href;
+      }
       return basePath + href;
     }
     // Иное — оставляем как есть (внешние домены)
     return href;
   } catch {
     // относительные без протокола и т.д.
-    if (href.startsWith("/")) return basePath + href;
+    if (href.startsWith("/")) {
+      // Проверяем, не начинается ли путь уже с basePath
+      if (href.startsWith(basePath)) {
+        return href;
+      }
+      return basePath + href;
+    }
     // относительные ссылки оставляем — браузер сам разрешит относительно текущего пути
     return href;
   }
@@ -148,6 +174,12 @@ class SrcSetRewriter {
       return sizePart ? `${newUrl} ${sizePart}` : newUrl;
     });
     el.setAttribute(this.attr, parts.join(", "));
+  }
+}
+
+class NoIndexInjector {
+  element(el) {
+    el.append('<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">', { html: true });
   }
 }
 
