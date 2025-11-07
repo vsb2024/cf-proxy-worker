@@ -11,7 +11,7 @@
 3. Click the *Clone a public repository via Git URL!** 
 ![img_1.png](img_1.png)
 
-4. Enter the repository URL: `
+4. Enter the repository URL: https://github.com/vsb2024/cf-proxy-worker.git `
 ![img_2.png](img_2.png)
 
 5. Click **Create and deploy**
