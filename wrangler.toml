@@ -10,5 +10,5 @@ compatibility_date = "2024-01-01"
 # For now, removing routes - configure in Cloudflare Dashboard after deployment
 # or add zone_name/zone_id for your domain
  routes = [
-   { pattern = "thenationonlineng.net/casino-en-ligne/*", zone_name = "thenationonlineng.net" }
+   { pattern = "casino-kit-prod.site/casino-en-ligne/*", zone_name = "casino-kit-prod.site" }
  ]
